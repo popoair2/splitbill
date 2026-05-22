@@ -1,73 +1,78 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --card: #1a1a1a;
-  --card-border: #2a2a2a;
+  --bg: #0c0c0c;
+  --surface: #141414;
+  --border: #1e1e1e;
+  --text: #e0e0e0;
+  --text-muted: #555555;
   --accent: #ff6b2b;
-  --accent-hover: #ff8555;
-  --accent-glow: rgba(255, 107, 43, 0.15);
   --green: #22c55e;
   --red: #ef4444;
-  --yellow: #f59e0b;
-  --text-muted: #888888;
-  --text-secondary: #aaaaaa;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-border: var(--card-border);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-glow: var(--accent-glow);
-  --color-green: var(--green);
-  --color-red: var(--red);
-  --color-yellow: var(--yellow);
+  --color-background: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-text: var(--text);
   --color-text-muted: var(--text-muted);
-  --color-text-secondary: var(--text-secondary);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar styling */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 3px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 4px;
+  background: #222;
+  border-radius: 3px;
 }
 
-/* Input styling for dark theme */
 input, select, textarea {
-  background: #1a1a1a !important;
-  color: #ededed !important;
-  border-color: #333 !important;
+  background: #0c0c0c !important;
+  color: #e0e0e0 !important;
+  border-color: #222 !important;
+  font-size: 14px !important;
 }
 
 input::placeholder, textarea::placeholder {
-  color: #666 !important;
+  color: #444 !important;
 }
 
 select option {
-  background: #1a1a1a;
-  color: #ededed;
+  background: #0c0c0c;
+  color: #e0e0e0;
+}
+
+/* Remove number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
 }
