@@ -75,7 +75,6 @@ export function GroupPage({ groupCode }: { groupCode: string }) {
   }, [groupCode]);
 
   useEffect(() => {
-    // Load current member from localStorage
     const stored = localStorage.getItem('splitbill_member');
     if (stored) {
       const member: StoredMember = JSON.parse(stored);
@@ -87,7 +86,6 @@ export function GroupPage({ groupCode }: { groupCode: string }) {
     loadData();
   }, [groupCode, loadData]);
 
-  // Initialize forWhom with all members
   useEffect(() => {
     if (members.length > 0 && txForWhom.length === 0) {
       setTxForWhom(members.map(m => m.id));
@@ -156,56 +154,83 @@ export function GroupPage({ groupCode }: { groupCode: string }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">載入中...</p>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#ff6b2b]/30 border-t-[#ff6b2b] rounded-full animate-spin" />
+          <p className="text-[#888] text-sm">載入中...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-red-500">{error}</p>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+        <div className="bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl p-6 text-center">
+          <p className="text-[#ef4444] text-lg font-medium">{error}</p>
+        </div>
       </div>
     );
   }
 
   const memberMap = new Map(members.map(m => [m.id, m.name]));
+  const totalSpent = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-[#0a0a0a] pb-8">
+      {/* Header Card */}
+      <div className="bg-[#1a1a1a] border-b border-[#2a2a2a]">
+        <div className="max-w-lg mx-auto px-4 py-5">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="font-bold text-lg">{group?.name}</h1>
-              <button onClick={copyCode} className="text-sm text-blue-600 font-mono">
-                Code: {groupCode} 📋
+              <h1 className="font-bold text-xl text-[#ededed]">{group?.name}</h1>
+              <button onClick={copyCode} className="text-sm text-[#ff6b2b] font-mono mt-1 flex items-center gap-1">
+                {groupCode} <span className="text-xs">📋</span>
               </button>
             </div>
             <div className="text-right">
-              <p className="text-xs text-gray-500">你係</p>
-              <p className="font-semibold text-sm">{currentMember?.name || '訪客'}</p>
+              <p className="text-[#888] text-xs">你係</p>
+              <p className="font-semibold text-sm text-[#ededed]">{currentMember?.name || '訪客'}</p>
+            </div>
+          </div>
+
+          {/* Summary Stats */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-[#0a0a0a] rounded-xl p-3 text-center border border-[#2a2a2a]">
+              <p className="text-[#ff6b2b] text-lg font-bold">{transactions.length}</p>
+              <p className="text-[#888] text-xs">交易</p>
+            </div>
+            <div className="bg-[#0a0a0a] rounded-xl p-3 text-center border border-[#2a2a2a]">
+              <p className="text-[#22c55e] text-lg font-bold">{members.length}</p>
+              <p className="text-[#888] text-xs">成員</p>
+            </div>
+            <div className="bg-[#0a0a0a] rounded-xl p-3 text-center border border-[#2a2a2a]">
+              <p className="text-[#ededed] text-lg font-bold">¥{totalSpent.toLocaleString()}</p>
+              <p className="text-[#888] text-xs">總額</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b">
+      <div className="bg-[#1a1a1a] border-b border-[#2a2a2a]">
         <div className="max-w-lg mx-auto flex">
-          {(['transactions', 'balances', 'settle'] as const).map(t => (
+          {([
+            { key: 'transactions', label: '交易', icon: '💳' },
+            { key: 'balances', label: '結餘', icon: '📊' },
+            { key: 'settle', label: '還款', icon: '💸' },
+          ] as const).map(t => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 py-3 text-sm font-medium ${
-                tab === t
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500'
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                tab === t.key
+                  ? 'text-[#ff6b2b] border-b-2 border-[#ff6b2b]'
+                  : 'text-[#888]'
               }`}
             >
-              {t === 'transactions' ? '交易' : t === 'balances' ? '結餘' : '還款'}
+              <span className="block text-base mb-0.5">{t.icon}</span>
+              {t.label}
             </button>
           ))}
         </div>
@@ -213,90 +238,110 @@ export function GroupPage({ groupCode }: { groupCode: string }) {
 
       {/* Content */}
       <div className="max-w-lg mx-auto p-4">
-        {/* TRANSACTIONS TAB */}
+
+        {/* ===== TRANSACTIONS TAB ===== */}
         {tab === 'transactions' && (
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold">交易記錄</h2>
-              <button
-                onClick={() => setShowAddTx(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
-              >
-                + 新增交易
-              </button>
-            </div>
-
             {transactions.length === 0 ? (
-              <p className="text-gray-400 text-center py-8">未有交易記錄</p>
+              <div className="text-center py-16">
+                <div className="w-16 h-16 bg-[#1a1a1a] rounded-2xl flex items-center justify-center mx-auto mb-4 border border-[#2a2a2a]">
+                  <span className="text-3xl">📝</span>
+                </div>
+                <p className="text-[#888] text-base">未有交易記錄</p>
+                <p className="text-[#666] text-sm mt-1">撳下面嘅按鈕新增第一筆交易</p>
+              </div>
             ) : (
               <div className="space-y-3">
                 {transactions.map(tx => (
-                  <div key={tx.id} className="bg-white rounded-xl p-4 shadow-sm border">
+                  <div key={tx.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-4">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold">
-                          {memberMap.get(tx.payer_id) || '未知'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {tx.description || '冇備註'}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-8 h-8 bg-[#ff6b2b]/10 rounded-full flex items-center justify-center text-sm font-bold text-[#ff6b2b]">
+                            {(memberMap.get(tx.payer_id) || '?').charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-[#ededed] text-sm">
+                              {memberMap.get(tx.payer_id) || '未知'}
+                            </p>
+                            <p className="text-xs text-[#888]">
+                              {new Date(tx.created_at).toLocaleDateString('zh-HK')}
+                            </p>
+                          </div>
+                        </div>
+                        {tx.description && (
+                          <p className="text-[#aaa] text-sm mt-2 ml-10">{tx.description}</p>
+                        )}
+                        <p className="text-[#666] text-xs mt-1 ml-10">
                           分攤：{(tx.for_whom || []).map(id => memberMap.get(id)).filter(Boolean).join('、')}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-lg">¥{Number(tx.amount).toLocaleString()}</p>
-                        <p className="text-xs text-gray-400">
-                          {new Date(tx.created_at).toLocaleDateString('zh-HK')}
-                        </p>
+                      <div className="text-right ml-3">
+                        <p className="font-bold text-lg text-[#ff6b2b]">¥{Number(tx.amount).toLocaleString()}</p>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
+
+            {/* FAB - Add Transaction */}
+            <button
+              onClick={() => setShowAddTx(true)}
+              className="fixed bottom-6 right-6 w-14 h-14 bg-[#ff6b2b] hover:bg-[#ff8555] text-white rounded-2xl shadow-lg shadow-[#ff6b2b]/30 flex items-center justify-center text-2xl transition-all active:scale-95"
+            >
+              +
+            </button>
           </div>
         )}
 
-        {/* BALANCES TAB */}
+        {/* ===== BALANCES TAB ===== */}
         {tab === 'balances' && (
           <div>
-            <h2 className="font-bold mb-4">各人結餘</h2>
-            <div className="space-y-3">
-              {members.map(member => {
-                const balance = balances.get(member.id) || 0;
-                return (
-                  <div key={member.id} className="bg-white rounded-xl p-4 shadow-sm border flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-                        balance > 0 ? 'bg-green-500' : balance < 0 ? 'bg-red-500' : 'bg-gray-400'
-                      }`}>
-                        {member.name.charAt(0)}
-                      </div>
-                      <span className="font-medium">{member.name}</span>
-                    </div>
-                    <span className={`font-bold ${
-                      balance > 0 ? 'text-green-600' : balance < 0 ? 'text-red-600' : 'text-gray-400'
+            {members.map(member => {
+              const balance = balances.get(member.id) || 0;
+              const isPositive = balance > 0.01;
+              const isNegative = balance < -0.01;
+              return (
+                <div key={member.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-4 mb-3 flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                      isPositive ? 'bg-[#22c55e]' : isNegative ? 'bg-[#ef4444]' : 'bg-[#333]'
                     }`}>
-                      {balance > 0 ? '+' : ''}{Math.round(balance).toLocaleString()}
-                    </span>
+                      {member.name.charAt(0)}
+                    </div>
+                    <div>
+                      <span className="font-medium text-[#ededed]">{member.name}</span>
+                      <p className="text-xs text-[#888]">
+                        {isPositive ? '應收' : isNegative ? '應付' : '已結清'}
+                      </p>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+                  <span className={`font-bold text-lg ${
+                    isPositive ? 'text-[#22c55e]' : isNegative ? 'text-[#ef4444]' : 'text-[#666]'
+                  }`}>
+                    {isPositive ? '+' : ''}{Math.round(balance).toLocaleString()}
+                  </span>
+                </div>
+              );
+            })}
 
             {settlements.length > 0 && (
               <div className="mt-6">
-                <h3 className="font-bold mb-3">建議還款</h3>
+                <h3 className="font-bold mb-3 text-[#ededed] flex items-center gap-2">
+                  <span className="text-[#ff6b2b]">⚡</span> 建議還款
+                </h3>
                 <div className="space-y-2">
                   {settlements.map((s, i) => (
-                    <div key={i} className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
-                      <p className="font-medium">
-                        <span className="text-red-600">{s.fromName}</span>
-                        {' → '}
-                        <span className="text-green-600">{s.toName}</span>
-                      </p>
-                      <p className="font-bold text-lg">¥{s.amount.toLocaleString()}</p>
+                    <div key={i} className="bg-[#ff6b2b]/5 border border-[#ff6b2b]/20 rounded-2xl p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[#ef4444] font-medium text-sm">{s.fromName}</span>
+                          <span className="text-[#ff6b2b]">→</span>
+                          <span className="text-[#22c55e] font-medium text-sm">{s.toName}</span>
+                        </div>
+                        <span className="font-bold text-[#ff6b2b]">¥{s.amount.toLocaleString()}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -305,17 +350,20 @@ export function GroupPage({ groupCode }: { groupCode: string }) {
           </div>
         )}
 
-        {/* SETTLE TAB */}
+        {/* ===== SETTLE TAB ===== */}
         {tab === 'settle' && (
           <div>
-            <h2 className="font-bold mb-4">記錄還款</h2>
-            <div className="bg-white rounded-xl p-4 shadow-sm border space-y-3">
+            {/* Settle Form */}
+            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-5 space-y-4 mb-6">
+              <h2 className="font-bold text-[#ededed] flex items-center gap-2">
+                <span>💸</span> 記錄還款
+              </h2>
               <div>
-                <label className="text-sm text-gray-500 mb-1 block">邊個還錢</label>
+                <label className="text-[#888] text-xs font-medium mb-2 block">邊個還錢</label>
                 <select
                   value={settleFrom}
                   onChange={e => setSettleFrom(e.target.value)}
-                  className="w-full border rounded-lg px-4 py-3 text-base"
+                  className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl px-4 py-3 text-base text-[#ededed] focus:border-[#ff6b2b] focus:outline-none transition-colors"
                 >
                   <option value="">揀一個人</option>
                   {members.map(m => (
@@ -324,11 +372,11 @@ export function GroupPage({ groupCode }: { groupCode: string }) {
                 </select>
               </div>
               <div>
-                <label className="text-sm text-gray-500 mb-1 block">還俾邊個</label>
+                <label className="text-[#888] text-xs font-medium mb-2 block">還俾邊個</label>
                 <select
                   value={settleTo}
                   onChange={e => setSettleTo(e.target.value)}
-                  className="w-full border rounded-lg px-4 py-3 text-base"
+                  className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl px-4 py-3 text-base text-[#ededed] focus:border-[#ff6b2b] focus:outline-none transition-colors"
                 >
                   <option value="">揀一個人</option>
                   {members.map(m => (
@@ -337,38 +385,42 @@ export function GroupPage({ groupCode }: { groupCode: string }) {
                 </select>
               </div>
               <div>
-                <label className="text-sm text-gray-500 mb-1 block">金額</label>
+                <label className="text-[#888] text-xs font-medium mb-2 block">金額（¥）</label>
                 <input
                   type="number"
                   value={settleAmount}
                   onChange={e => setSettleAmount(e.target.value)}
                   placeholder="0"
-                  className="w-full border rounded-lg px-4 py-3 text-base"
+                  className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl px-4 py-3 text-base text-[#ededed] placeholder-[#555] focus:border-[#ff6b2b] focus:outline-none transition-colors"
                 />
               </div>
               <button
                 onClick={handleSettle}
                 disabled={settleSubmitting}
-                className="w-full bg-green-600 text-white rounded-lg py-3 font-semibold disabled:opacity-50"
+                className="w-full bg-[#22c55e] hover:bg-[#2ee06b] text-white rounded-xl py-3 font-bold disabled:opacity-40 transition-all active:scale-[0.98] shadow-lg shadow-[#22c55e]/20"
               >
                 {settleSubmitting ? '記錄中...' : '確認還款'}
               </button>
             </div>
 
-            {/* Payment history */}
+            {/* Payment History */}
             {payments.length > 0 && (
-              <div className="mt-6">
-                <h3 className="font-bold mb-3">還款記錄</h3>
+              <div>
+                <h3 className="font-bold mb-3 text-[#ededed]">還款記錄</h3>
                 <div className="space-y-2">
                   {payments.map(p => (
-                    <div key={p.id} className="bg-white rounded-xl p-4 shadow-sm border">
-                      <p className="font-medium">
-                        {memberMap.get(p.from_member_id)} → {memberMap.get(p.to_member_id)}
-                      </p>
-                      <p className="font-bold">¥{Number(p.amount).toLocaleString()}</p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(p.created_at).toLocaleDateString('zh-HK')}
-                      </p>
+                    <div key={p.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium text-[#ededed] text-sm">
+                            {memberMap.get(p.from_member_id)} <span className="text-[#ff6b2b]">→</span> {memberMap.get(p.to_member_id)}
+                          </p>
+                          <p className="text-xs text-[#888] mt-1">
+                            {new Date(p.created_at).toLocaleDateString('zh-HK')}
+                          </p>
+                        </div>
+                        <span className="font-bold text-[#22c55e]">¥{Number(p.amount).toLocaleString()}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -378,22 +430,25 @@ export function GroupPage({ groupCode }: { groupCode: string }) {
         )}
       </div>
 
-      {/* Add Transaction Modal */}
+      {/* ===== ADD TRANSACTION MODAL ===== */}
       {showAddTx && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-          <div className="bg-white w-full max-w-lg rounded-t-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-bold text-lg">新增交易</h2>
-              <button onClick={() => setShowAddTx(false)} className="text-gray-400 text-2xl">×</button>
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center">
+          <div className="bg-[#1a1a1a] w-full max-w-lg rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto border-t border-[#2a2a2a]">
+            {/* Handle bar */}
+            <div className="w-10 h-1 bg-[#333] rounded-full mx-auto mb-5" />
+
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="font-bold text-lg text-[#ededed]">新增交易</h2>
+              <button onClick={() => setShowAddTx(false)} className="text-[#888] text-2xl hover:text-[#ededed] transition-colors">×</button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-500 mb-1 block">邊個付錢</label>
+                <label className="text-[#888] text-xs font-medium mb-2 block">邊個付錢</label>
                 <select
                   value={txPayer}
                   onChange={e => setTxPayer(e.target.value)}
-                  className="w-full border rounded-lg px-4 py-3 text-base"
+                  className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl px-4 py-3 text-base text-[#ededed] focus:border-[#ff6b2b] focus:outline-none transition-colors"
                 >
                   {members.map(m => (
                     <option key={m.id} value={m.id}>{m.name}</option>
@@ -402,38 +457,38 @@ export function GroupPage({ groupCode }: { groupCode: string }) {
               </div>
 
               <div>
-                <label className="text-sm text-gray-500 mb-1 block">金額（¥）</label>
+                <label className="text-[#888] text-xs font-medium mb-2 block">金額（¥）</label>
                 <input
                   type="number"
                   value={txAmount}
                   onChange={e => setTxAmount(e.target.value)}
                   placeholder="0"
-                  className="w-full border rounded-lg px-4 py-3 text-2xl font-bold"
+                  className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl px-4 py-3 text-2xl font-bold text-[#ff6b2b] placeholder-[#555] focus:border-[#ff6b2b] focus:outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="text-sm text-gray-500 mb-1 block">備註</label>
+                <label className="text-[#888] text-xs font-medium mb-2 block">備註</label>
                 <input
                   type="text"
                   value={txDesc}
                   onChange={e => setTxDesc(e.target.value)}
                   placeholder="例如：午餐、車費..."
-                  className="w-full border rounded-lg px-4 py-3 text-base"
+                  className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl px-4 py-3 text-base text-[#ededed] placeholder-[#555] focus:border-[#ff6b2b] focus:outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="text-sm text-gray-500 mb-2 block">邊個要分攤</label>
+                <label className="text-[#888] text-xs font-medium mb-3 block">邊個要分攤</label>
                 <div className="flex flex-wrap gap-2">
                   {members.map(m => (
                     <button
                       key={m.id}
                       onClick={() => toggleForWhom(m.id)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium ${
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                         txForWhom.includes(m.id)
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-600'
+                          ? 'bg-[#ff6b2b] text-white shadow-lg shadow-[#ff6b2b]/20'
+                          : 'bg-[#0a0a0a] text-[#888] border border-[#333]'
                       }`}
                     >
                       {m.name}
@@ -445,7 +500,7 @@ export function GroupPage({ groupCode }: { groupCode: string }) {
               <button
                 onClick={handleAddTransaction}
                 disabled={txSubmitting}
-                className="w-full bg-blue-600 text-white rounded-lg py-4 font-semibold text-lg disabled:opacity-50"
+                className="w-full bg-[#ff6b2b] hover:bg-[#ff8555] text-white rounded-2xl py-4 font-bold text-lg disabled:opacity-40 transition-all active:scale-[0.98] shadow-lg shadow-[#ff6b2b]/20 mt-2"
               >
                 {txSubmitting ? '新增中...' : '確認新增'}
               </button>
